@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1D428A"/>
+      <stop offset="1" stop-color="#0F2557"/>
+    </linearGradient>
+    <radialGradient id="ball" cx="0.38" cy="0.32" r="0.8">
+      <stop offset="0" stop-color="#E8344F"/>
+      <stop offset="1" stop-color="#A50C25"/>
+    </radialGradient>
+    <clipPath id="ballClip"><circle cx="512" cy="410" r="265"/></clipPath>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <circle cx="512" cy="410" r="265" fill="url(#ball)"/>
+  <g clip-path="url(#ballClip)" stroke="#FFFFFF" stroke-width="20" fill="none" stroke-linecap="round">
+    <line x1="512" y1="130" x2="512" y2="690"/>
+    <line x1="232" y1="410" x2="792" y2="410"/>
+    <path d="M330 175 C 430 300 430 520 330 645"/>
+    <path d="M694 175 C 594 300 594 520 694 645"/>
+  </g>
+  <circle cx="512" cy="410" r="265" fill="none" stroke="#FFFFFF" stroke-width="20"/>
+  <text x="512" y="935" text-anchor="middle" font-family="Anton" font-size="250" letter-spacing="18" fill="#FFFFFF">FBB</text>
+</svg>

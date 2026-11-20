@@ -1,0 +1,7 @@
+{
+  "name": "fbb-league-app",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": { "demo": "node scripts/make-demo.mjs" }
+}
