@@ -538,14 +538,13 @@ function vPrizes(M) {
   h += `<div class="kpi"><div class="l">Weekly prizes</div><div class="v">${money(RULES.weekly * prizeWeeksCount)}</div><div class="s">${money(paid)} awarded · ${prizeWeeksCount} × ${money(RULES.weekly)}</div></div></div>`;
 
   // Money leaderboard
-  const rows = M.order.filter((id) => won[id].weekly + won[id].place > 0).sort((a, c) => (won[c].weekly + won[c].place) - (won[a].weekly + won[a].place));
+  const rows = M.order.slice().sort((a, c) => (won[c].weekly + won[c].place) - (won[a].weekly + won[a].place));
   h += `<div class="card"><h2>Money leaderboard</h2>`;
-  if (!rows.length) h += `<div class="note">No prizes awarded yet.</div>`;
-  else {
-    h += `<div class="tw"><table><thead><tr><th class="tm">Team</th><th>Wks</th><th>Weekly</th><th>Playoffs</th><th>Total</th><th>Net</th></tr></thead><tbody>`;
+  {
+    h += `<div class="tw"><table><thead><tr><th class="tm">Team</th><th>Net</th><th>Total</th><th>Weekly</th><th>Playoffs</th><th>Wks</th></tr></thead><tbody>`;
     rows.forEach((id, i) => { const w = won[id], tot = w.weekly + w.place, net = tot - RULES.entry;
-      h += `<tr><td class="tm">${teamCell(M.teams[id], i + 1)}</td><td>${w.n % 1 ? w.n.toFixed(1) : w.n}</td><td>${money(w.weekly)}</td><td>${w.place ? money(w.place) : '—'}</td><td style="font-weight:800">${money(tot)}</td><td class="${net >= 0 ? 'pos' : 'neg'}">${net >= 0 ? '+' : '−'}${money(Math.abs(net))}</td></tr>`; });
-    h += `</tbody></table></div><div class="note">Net = winnings minus the ${money(RULES.entry)} entry.</div>`;
+      h += `<tr><td class="tm">${teamCell(M.teams[id], i + 1)}</td><td class="${net > 0 ? 'pos' : net < 0 ? 'neg' : ''}" style="font-weight:800">${net > 0 ? '+' : net < 0 ? '−' : ''}${money(Math.abs(net))}</td><td>${money(tot)}</td><td>${w.weekly ? money(w.weekly) : '—'}</td><td>${w.place ? money(w.place) : '—'}</td><td>${w.n % 1 ? w.n.toFixed(1) : w.n}</td></tr>`; });
+    h += `</tbody></table></div><div class="note">All ${RULES.teams} teams, sorted by total won. Net = winnings minus the ${money(RULES.entry)} entry (red = still down).</div>`;
   }
   h += `</div>`;
 
