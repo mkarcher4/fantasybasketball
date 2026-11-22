@@ -58,8 +58,41 @@ export default async function handler(req, res) {
       res.status(502).json({ error: 'espn_bad_json', message: 'ESPN did not return JSON (cookies may be invalid).' });
       return;
     }
-    // Cache at Vercel's edge briefly so a group chat full of refreshes doesn't hammer ESPN.
-    res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=600');
+
+    // Live scores: ESPN only returns up-to-the-minute category totals for the current
+    // matchup when the request names today's scoring period. Fetch the current week
+    // that way and swap those matchups into the main response.
+    const meta = { fetchedAt: new Date().toISOString(), live: 0, scoringPeriodId: null };
+    const cur = data.status && data.status.currentMatchupPeriod;
+    const sp = data.scoringPeriodId || (data.status && data.status.latestScoringPeriod);
+    if (cur && sp) {
+      meta.scoringPeriodId = sp;
+      try {
+        const liveUrl =
+          `https://lm-api-reads.fantasy.espn.com/apis/v3/games/fba/seasons/${season}` +
+          `/segments/0/leagues/${encodeURIComponent(leagueId)}?view=mMatchupScore&view=mScoreboard&scoringPeriodId=${sp}`;
+        const lr = await fetch(liveUrl, {
+          headers: { ...headers, 'x-fantasy-filter': JSON.stringify({ schedule: { filterMatchupPeriodIds: { value: [cur] } } }) },
+        });
+        if (lr.ok) {
+          const live = await lr.json();
+          const byId = new Map((live.schedule || []).filter((m) => m.matchupPeriodId === cur).map((m) => [m.id, m]));
+          data.schedule = (data.schedule || []).map((m) => {
+            const l = byId.get(m.id);
+            if (!l) return m;
+            meta.live++;
+            const pick = (side) => (l[side] && l[side].cumulativeScore ? { ...m[side], ...l[side] } : m[side]);
+            return { ...m, home: pick('home'), away: pick('away'), winner: l.winner || m.winner };
+          });
+        }
+      } catch {
+        /* fall back to the main response */
+      }
+    }
+    data._fbb = meta;
+
+    // Short edge cache so a group chat full of refreshes doesn't hammer ESPN.
+    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=30');
     res.status(200).json(data);
   } catch (e) {
     res.status(502).json({ error: 'fetch_failed', message: String((e && e.message) || e) });

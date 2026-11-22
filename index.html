@@ -185,7 +185,7 @@ const wlt = (r) => `${r.w}-${r.l}-${r.t}`;
 const pct = (r) => { const g=r.w+r.l+r.t; return g ? (r.w + r.t/2)/g : 0; };
 
 /* ============ Data loading ============ */
-async function load() {
+async function load(force) {
   S.loading = true; S.err=''; $('#refreshBtn').classList.add('spin');
   const qp = new URLSearchParams(location.search);
   const demo = qp.get('demo');
@@ -193,7 +193,7 @@ async function load() {
     let data;
     if (demo) { data = await (await fetch(`/demo/${demo==='final'?'final':'midseason'}.json`)).json(); S.demo = true; S.notice = 'Demo data — fake teams. Remove “?demo” from the address to see your league.'; }
     else {
-      const r = await fetch('/api/league', { cache: 'no-store' });
+      const r = await fetch('/api/league' + (force ? '?t=' + Date.now() : ''), { cache: 'no-store' });
       if (r.status === 503 || r.status === 404) {
         data = await (await fetch('/demo/midseason.json')).json(); S.demo = true;
         S.notice = 'ESPN isn’t connected yet, so this is demo data. Add ESPN_LEAGUE_ID, ESPN_S2 and ESPN_SWID in Vercel to show your league.';
@@ -203,7 +203,7 @@ async function load() {
         data = j; S.demo = false; S.notice = '';
       }
     }
-    S.m = buildModel(data); S.updated = new Date();
+    S.m = buildModel(data); S.updated = (data._fbb && data._fbb.fetchedAt) ? new Date(data._fbb.fetchedAt) : new Date();
     if (S.week == null) S.week = S.m.cur;
     if (S.statsWeek == null) S.statsWeek = S.m.lastStatWeek || 1;
   } catch (e) { S.err = e.message || String(e); }
@@ -633,7 +633,7 @@ document.addEventListener('click', (e) => {
   const h = e.target.closest('th.sort');
   if (h) { const key = h.dataset.sk, k = h.dataset.k; const cur = S.sort[key];
     S.sort[key] = { k, dir: cur && cur.k === k ? -cur.dir : (k === 'team' ? 1 : -1) }; render(); return; }
-  if (e.target.closest('#refreshBtn')) load();
+  if (e.target.closest('#refreshBtn')) load(true);
 });
 document.addEventListener('change', (e) => {
   if (e.target.id === 'wkSel') { S.week = +e.target.value; render(); }
@@ -643,7 +643,7 @@ window.addEventListener('hashchange', () => { const k = location.hash.slice(1); 
 (() => { const k = location.hash.slice(1); if (TABS.some((t) => t[0] === k)) S.tab = k; })();
 // Refresh when returning to the app, and every 3 minutes while a week is live.
 document.addEventListener('visibilitychange', () => { if (!document.hidden && S.updated && Date.now() - S.updated > 60000) load(); });
-setInterval(() => { if (!document.hidden && S.m && S.m.matchups.some((m) => m.state === 'live')) load(); }, 180000);
+setInterval(() => { if (!document.hidden && S.m && S.m.matchups.some((m) => m.state === 'live')) load(); }, 120000);
 render(); load();
 </script>
 </body>
